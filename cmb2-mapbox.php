@@ -143,16 +143,16 @@ function cmb2_render_mapbox_map_callback( $field, $value, $object_id, $object_ty
 								data.features.shift();
 							}
 							var coords = String( data.features[0].geometry.coordinates ).split(",");
-							document.getElementById("map_lnglat").value = data.features[0].geometry.coordinates;
-							document.getElementById("map_lng").value = coords[0];
-							document.getElementById("map_lat").value = coords[1];
+							document.getElementById("<?php echo $field_type->_id( '_lnglat' ); ?>").value = data.features[0].geometry.coordinates;
+							document.getElementById("<?php echo $field_type->_id( '_lng' ); ?>").value = coords[0];
+							document.getElementById("<?php echo $field_type->_id( '_lat' ); ?>").value = coords[1];
 						} else {
 							draw
 								.deleteAll()
 								.getAll();
-							document.getElementById("map_lnglat").value = '';
-							document.getElementById("map_lng").value = '';
-							document.getElementById("map_lat").value = '';
+							document.getElementById("<?php echo $field_type->_id( '_lnglat' ); ?>").value = '';
+							document.getElementById("<?php echo $field_type->_id( '_lng' ); ?>").value = '';
+							document.getElementById("<?php echo $field_type->_id( '_lat' ); ?>").value = '';
 						}
 					}
 					<?php if ( ! empty( $value['lnglat'] ) ) { ?>
