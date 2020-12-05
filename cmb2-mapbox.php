@@ -3,11 +3,12 @@
 Plugin Name: CMB2 Mapbox
 Plugin URI:
 Description: This plugin adds a new CMB2 fieldtype for adding a single point to a Mapbox map. This plugin requires CMB2 and a Mapbox access token.
-Version: 1.0.0
+Version: 1.0.1
 Author: Rob Clark
 Author URI: https://robclark.io
 License: GPLv2 or later
 Text Domain: cmb2-mapbox
+GitHub Plugin URI: pixelwatt/cmb2-mapbox
 */
 
 add_action( 'cmb2_admin_init', 'cmb2_mapbox_options_metabox' );
@@ -160,41 +161,54 @@ function cmb2_render_mapbox_map_callback( $field, $value, $object_id, $object_ty
 							draw.add({ type: 'Point', coordinates: [<?php echo $value['lnglat']; ?>] });
 						});
 					<?php } ?>
+
 				</script>
-				<div style="display: none; visibility: hidden;">
-					<p><label for="<?php echo $field_type->_id( '_lat' ); ?>">Marker Latitude (Manual Entry)</label></p>
-					<?php
-						echo $field_type->input(
-							array(
-								'name'  => $field_type->_name( '[lat]' ),
-								'id'    => $field_type->_id( '_lat' ),
-								'value' => $value['lat'],
-								'desc'  => '',
-							)
-						);
-					?>
-					<p><label for="<?php echo $field_type->_id( '_lng' ); ?>">Marker Longitude (Manual Entry)</label></p>
-					<?php
+					<style>
+						input.cmb2-mapbox-entry-field {
+							width: 30%;
+							margin-right: 3%;
+							margin-left: 0 !important;
+							margin-top: 16px;
+							appearance: none;
+							border-radius: 0;
+							border: none;
+							border-bottom: 2px solid #E3E3E3;
+						}
+					</style>
+					<div class="entry-fields"><p style="display: none; visibility: hidden;"><label for="<?php echo $field_type->_id( '_lng' ); ?>">Marker Longitude</label></p><?php
 						echo $field_type->input(
 							array(
 								'name'  => $field_type->_name( '[lng]' ),
 								'id'    => $field_type->_id( '_lng' ),
+								'class' => 'cmb2-mapbox-entry-field',
 								'value' => $value['lng'],
 								'desc'  => '',
+								'placeholder' => 'Longitude',
 							)
 						);
-					?><br><br>
-					<?php
+					?><p style="display: none; visibility: hidden;"><label for="<?php echo $field_type->_id( '_lat' ); ?>">Marker Latitude</label></p><?php
+						echo $field_type->input(
+							array(
+								'name'  => $field_type->_name( '[lat]' ),
+								'id'    => $field_type->_id( '_lat' ),
+								'class' => 'cmb2-mapbox-entry-field',
+								'value' => $value['lat'],
+								'desc'  => '',
+								'placeholder' => 'Latitude',
+							)
+						);
+					?><p style="display: none; visibility: hidden;"><label for="<?php echo $field_type->_id( '_lnglat' ); ?>">Longitude,Latitude</label></p><?php
 						echo $field_type->input(
 							array(
 								'name'  => $field_type->_name( '[lnglat]' ),
 								'id'    => $field_type->_id( '_lnglat' ),
+								'class' => 'cmb2-mapbox-entry-field',
 								'value' => $value['lnglat'],
 								'desc'  => '',
+								'placeholder' => 'Longitude,Latitude',
 							)
 						);
-					?>
-				</div>
+					?></div>
 			<?php
 		}
 	}
