@@ -8,7 +8,7 @@ Author: Rob Clark
 Author URI: https://robclark.io
 License: GPLv2 or later
 Text Domain: cmb2-mapbox
-GitHub Plugin URI: pixelwatt/cmb2-mapbox
+GitHub Plugin URI: https://github.com/pixelwatt/cmb2-mapbox
 */
 
 add_action( 'cmb2_admin_init', 'cmb2_mapbox_options_metabox' );
