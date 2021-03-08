@@ -3,7 +3,7 @@
 Plugin Name: CMB2 Mapbox
 Plugin URI:
 Description: This plugin adds a new CMB2 fieldtype for adding a single point to a Mapbox map. This plugin requires CMB2 and a Mapbox access token.
-Version: 1.0.1
+Version: 1.0.2
 Author: Rob Clark
 Author URI: https://robclark.io
 License: GPLv2 or later
@@ -59,11 +59,11 @@ function cmb2_mapbox_options_metabox() {
 
 
 function cmb2_mapbox_scripts() {
-	wp_enqueue_style( 'mapbox-gl', 'https://api.mapbox.com/mapbox-gl-js/v2.1.0/mapbox-gl.css', array(), null );
-	wp_enqueue_script( 'mapbox-gl', 'https://api.mapbox.com/mapbox-gl-js/v2.1.0/mapbox-gl.js', array(), null );
+	wp_enqueue_style( 'mapbox-gl', 'https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.css', array(), null );
+	wp_enqueue_script( 'mapbox-gl', 'https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js', array(), null );
 	if ( is_admin() ) {
-		wp_enqueue_style( 'mapbox-gl-draw', 'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.2.0/mapbox-gl-draw.css', array(), null );
-		wp_enqueue_script( 'mapbox-gl-draw', 'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.2.0/mapbox-gl-draw.js', array( 'mapbox-gl' ), null );
+		wp_enqueue_style( 'mapbox-gl-draw', 'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.2.2/mapbox-gl-draw.css', array(), null );
+		wp_enqueue_script( 'mapbox-gl-draw', 'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.2.2/mapbox-gl-draw.js', array( 'mapbox-gl' ), null );
 	}
 }
 
