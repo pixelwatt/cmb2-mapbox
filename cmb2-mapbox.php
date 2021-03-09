@@ -1,15 +1,15 @@
 <?php
-/*
-Plugin Name: CMB2 Mapbox
-Plugin URI:
-Description: This plugin adds a new CMB2 fieldtype for adding a single point to a Mapbox map. This plugin requires CMB2 and a Mapbox access token.
-Version: 1.0.2
-Author: Rob Clark
-Author URI: https://robclark.io
-License: GPLv2 or later
-Text Domain: cmb2-mapbox
-GitHub Plugin URI: https://github.com/pixelwatt/cmb2-mapbox
-*/
+/**
+ * Plugin Name: CMB2 Mapbox
+ * Plugin URI:
+ * Description: This plugin adds a new CMB2 fieldtype for adding a single point to a Mapbox map. This plugin requires CMB2 and a Mapbox access token.
+ * Version: 1.0.3
+ * Author: Rob Clark
+ * Author URI: https://robclark.io
+ * License: GPLv2 or later
+ * Text Domain: cmb2-mapbox
+ * GitHub Plugin URI: https://github.com/pixelwatt/cmb2-mapbox
+ */
 
 add_action( 'cmb2_admin_init', 'cmb2_mapbox_options_metabox' );
 
