@@ -3,7 +3,7 @@
  * Plugin Name: CMB2 Mapbox
  * Plugin URI:
  * Description: This plugin adds a new CMB2 fieldtype for adding a single point to a Mapbox map. This plugin requires CMB2 and a Mapbox access token.
- * Version: 1.0.3
+ * Version: 1.5.0
  * Author: Rob Clark
  * Author URI: https://robclark.io
  * License: GPLv2 or later
@@ -59,11 +59,11 @@ function cmb2_mapbox_options_metabox() {
 
 
 function cmb2_mapbox_scripts() {
-	wp_enqueue_style( 'mapbox-gl', 'https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.css', array(), null );
-	wp_enqueue_script( 'mapbox-gl', 'https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js', array(), null );
+	wp_enqueue_style( 'mapbox-gl', 'https://api.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.css', array(), null );
+	wp_enqueue_script( 'mapbox-gl', 'https://api.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.js', array(), null );
 	if ( is_admin() ) {
-		wp_enqueue_style( 'mapbox-gl-draw', 'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.2.2/mapbox-gl-draw.css', array(), null );
-		wp_enqueue_script( 'mapbox-gl-draw', 'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.2.2/mapbox-gl-draw.js', array( 'mapbox-gl' ), null );
+		wp_enqueue_style( 'mapbox-gl-draw', 'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.1/mapbox-gl-draw.css', array(), null );
+		wp_enqueue_script( 'mapbox-gl-draw', 'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.1/mapbox-gl-draw.js', array( 'mapbox-gl' ), null );
 	}
 }
 
@@ -93,7 +93,8 @@ function cmb2_render_mapbox_map_callback( $field, $value, $object_id, $object_ty
 							zoom: 13,
 							center: [<?php echo $value['lnglat']; ?>]
 						<?php } else { ?>
-							zoom: 11<?php echo ( isset( $options['map_center'] ) ? ',center: [' . $options['map_center'] . ']' : '' ); ?>
+							zoom: <?php echo ( cmb2_mapbox_check_array_key( $field->args, 'default_zoom' ) ? $field->args['default_zoom'] : '11' ); ?>,
+							center: [<?php echo ( cmb2_mapbox_check_array_key( $options, 'map_center' ) ? $options['map_center'] : '-95.7129,37.0902' ); ?>]
 						<?php } ?>
 					});
 					map.addControl(new mapboxgl.NavigationControl());
@@ -216,3 +217,127 @@ function cmb2_render_mapbox_map_callback( $field, $value, $object_id, $object_ty
 }
 
 add_filter( 'cmb2_render_mapbox_map', 'cmb2_render_mapbox_map_callback', 10, 5 );
+
+function cmb2_mapbox_check_array_key( $item, $key ) {
+	$output = false;
+	if ( is_array( $item ) ) {
+		if ( array_key_exists( $key, $item ) ) {
+			if ( ! empty( $item["{$key}"] ) ) {
+				$output = true;
+			}
+		}
+	}
+	return $output;
+}
+
+if ( ! class_exists( 'CMB2_MB_Map' ) ) {
+	class CMB2_MB_Map {
+		protected $plugin_options = array();
+		protected $map_options = array();
+		protected $geo = array();
+
+		function __construct() {
+			$this->set_options();
+
+			// Set up arrays for geo
+			$this->geo['markers'] = array();
+		}
+
+		private function set_options() {
+			// Set plugin options
+			$defaults = array(
+				'api_token' => '',
+				'map_center' => '-95.7129,37.0902',
+			);
+			$this->plugin_options = wp_parse_args( get_option( 'cmb2_mapbox' ), $defaults );
+		}
+
+		public function set_map_options( $args ) {
+			$defaults = array(
+				'id'       => 'map',
+				'class'    => 'cmb2-mapbox-map',
+				'width'    => '100%',
+				'height'   => '400px',
+				'zoom'     => '16',
+				'center'   => '-95.7129,37.0902',
+				'mapstyle' => 'mapbox://styles/mapbox/streets-v11',
+				'terrain'  => false,
+			);
+			$this->map_options = wp_parse_args( $args, $defaults );
+		}
+
+		public function add_marker( $geo, $tooltip, $color ) {
+			$this->geo['markers'][] = array(
+				'geo'     => $geo,
+				'tooltip' => $tooltip,
+				'color' => $color,
+			);
+			return;
+		}
+
+		public function build_map() {
+			$output = '';
+			$marker_html = '';
+			$markers = array();
+			if ( 0 < count( $this->geo['markers'] ) ) {
+				$i = 1;
+				foreach( $this->geo['markers'] as $marker ) {
+					$html = '
+						const popup' . $i . ' = new mapboxgl.Popup({ offset: 25 }).setMaxWidth("300px").setHTML(
+												\'' . '<div class="mapbox-popup-content-wrap">' . $marker['tooltip'] . '</div>\'
+												);
+
+						const marker' . $i . ' = new mapboxgl.Marker({ color: \'' . $marker['color'] . '\' })
+							.setLngLat([' . $marker['geo']['lnglat'] . '])
+							.setPopup(popup' . $i . ')
+							.addTo(map);
+					';
+					$markers[] = array(
+						'html' => $html,
+						'lat' => $marker['geo']['lat']
+					);
+					$i++;
+				}
+				array_multisort( array_column( $markers, 'lat' ), SORT_DESC, $markers );
+				foreach ($markers as $marker) {
+					$marker_html .= $marker['html'];
+				}
+				$output .= '
+					<div id="' . $this->map_options['id'] . '" class="' . $this->map_options['class'] . '" style="height: ' . $this->map_options['height'] . '; width: ' . $this->map_options['width'] . ';"></div>
+					<script>
+						mapboxgl.accessToken = \'' . $this->plugin_options['api_token'] . '\';
+					  	var map = new mapboxgl.Map({
+						    container: \'' . $this->map_options['id'] . '\',
+						    style: \'' . $this->map_options['mapstyle'] . '\',
+						    zoom: ' . $this->map_options['zoom'] . ',
+						    scrollZoom: false,
+						    center: [' . $this->map_options['center'] . '],
+					  	});
+					  	map.on(\'load\', function () {
+							var nav = new mapboxgl.NavigationControl();
+							map.addControl(nav, \'top-left\');
+							' . $marker_html . '
+				';
+				if ( $this->map_options['terrain'] ) {
+					$output .= '
+								map.addSource(\'dem\', {
+									\'type\': \'raster-dem\',
+									\'url\': \'mapbox://mapbox.terrain-rgb\'
+								});
+								map.addLayer({
+									\'id\': \'hillshading\',
+									\'source\': \'dem\',
+									\'type\': \'hillshade\'
+								},);
+							
+					';
+				}
+				$output .= '
+					});
+					</script>
+				';
+			}
+			return $output;
+		}
+	}
+}

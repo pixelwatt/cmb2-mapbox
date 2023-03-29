@@ -21,6 +21,35 @@ Array
 )
 ```
 
+To add a maxbox_map field:
+
+```
+$cmb2->add_field(
+    array(
+        'name'     => __( 'Map Location', 'mtsi' ),
+        'desc'     => __( 'Drop a pin for this location.', 'mtsi' ),
+        'id'   => '_my_meta_key',
+        'type'     => 'mapbox_map',
+    )
+);
+```
+
+Optionally, you can set the default zoom for the map (used when loaded with no previously-set location):
+
+```
+$cmb2->add_field(
+    array(
+        'name'     => __( 'Map Location', 'mtsi' ),
+        'desc'     => __( 'Drop a pin for this location.', 'mtsi' ),
+        'id'   => '_my_meta_key',
+        'type'     => 'mapbox_map',
+        'default_zoom' => 3,
+    )
+);
+```
+
+A PHP class, CMB2_MB_Map, has also been provided for building maps with pins from multiple posts. Documentation coming shortly.
+
 ## Installation
 
 1. Upload the `cmb2-mapbox` folder to the `/wp-content/plugins/` directory
