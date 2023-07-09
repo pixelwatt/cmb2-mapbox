@@ -3,7 +3,7 @@
  * Plugin Name: CMB2 Mapbox
  * Plugin URI:
  * Description: This plugin adds a new CMB2 fieldtype for adding a single point to a Mapbox map. This plugin requires CMB2 and a Mapbox access token.
- * Version: 1.5.0
+ * Version: 1.5.1
  * Author: Rob Clark
  * Author URI: https://robclark.io
  * License: GPLv2 or later
@@ -218,6 +218,25 @@ function cmb2_render_mapbox_map_callback( $field, $value, $object_id, $object_ty
 
 add_filter( 'cmb2_render_mapbox_map', 'cmb2_render_mapbox_map_callback', 10, 5 );
 
+function cmb2_sanitize_mapbox_map_callback( $override_value, $value ) {
+	if ( cmb2_mapbox_check_array_key( $value, 'lnglat' ) ) {
+		$value['lnglat'] = str_replace( ' ', '', $value['lnglat'] );
+	}
+	if ( ( cmb2_mapbox_check_array_key( $value, 'lnglat' ) ) && ( ! cmb2_mapbox_check_array_key( $value, 'lng' ) ) && ( ! cmb2_mapbox_check_array_key( $value,'lat' ) ) ) {
+		$coords = explode( ',', $value['lnglat'] );
+		if ( is_array( $coords ) ) {
+			if ( 2 == count( $coords ) ) {
+				$value['lng'] = $coords[0];
+				$value['lat'] = $coords[1];
+			}
+		}
+	} elseif ( ( ! cmb2_mapbox_check_array_key( $value, 'lnglat' ) ) && ( cmb2_mapbox_check_array_key( $value, 'lng' ) ) && ( cmb2_mapbox_check_array_key( $value,'lat' ) ) ) {
+		$value['lnglat'] = $value['lng'] . ',' . $value['lat'];
+	}
+	return $value;
+}
+add_filter( 'cmb2_sanitize_mapbox_map', 'cmb2_sanitize_mapbox_map_callback', 10, 2 );
+
 function cmb2_mapbox_check_array_key( $item, $key ) {
 	$output = false;
 	if ( is_array( $item ) ) {
@@ -258,6 +277,7 @@ if ( ! class_exists( 'CMB2_MB_Map' ) ) {
 				'class'    => 'cmb2-mapbox-map',
 				'width'    => '100%',
 				'height'   => '400px',
+				'pitch'    => '0',
 				'zoom'     => '16',
 				'center'   => '-95.7129,37.0902',
 				'mapstyle' => 'mapbox://styles/mapbox/streets-v11',
@@ -310,6 +330,7 @@ if ( ! class_exists( 'CMB2_MB_Map' ) ) {
 						    container: \'' . $this->map_options['id'] . '\',
 						    style: \'' . $this->map_options['mapstyle'] . '\',
 						    zoom: ' . $this->map_options['zoom'] . ',
+						    pitch: ' . $this->map_options['pitch'] . ',
 						    scrollZoom: false,
 						    center: [' . $this->map_options['center'] . '],
 					  	});

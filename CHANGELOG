@@ -1,0 +1,7 @@
+# CHANGELOG
+
+## v1.5.1
+
+Changes:
+* Added key "pitch" to the set_map_options() method for specifying a map's pitch when using the CMB2_MB_Map php class to build a map.
+* Added lnglat sanitization. Now, spaces are removed from the combined lnglate field if present, the lnglat field will automatically be filled with individual lng and lat values if they are specified but lnglat is not, and individual lng and lat values will be filled if lnglat has been specified by indivual values have not.
