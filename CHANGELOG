@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v1.5.2
+
+Map marker scale can now be passed via the add_marker() method, and a custom html element to use in the place of the standard map marker can also be passed via add_marker()
+
+---
+
 ## v1.5.1
 
 Changes:

@@ -3,7 +3,7 @@
  * Plugin Name: CMB2 Mapbox
  * Plugin URI:
  * Description: This plugin adds a new CMB2 fieldtype for adding a single point to a Mapbox map. This plugin requires CMB2 and a Mapbox access token.
- * Version: 1.5.1
+ * Version: 1.5.2
  * Author: Rob Clark
  * Author URI: https://robclark.io
  * License: GPLv2 or later
@@ -286,11 +286,13 @@ if ( ! class_exists( 'CMB2_MB_Map' ) ) {
 			$this->map_options = wp_parse_args( $args, $defaults );
 		}
 
-		public function add_marker( $geo, $tooltip, $color ) {
+		public function add_marker( $geo, $tooltip, $color, $scale = 1, $elem = '' ) {
 			$this->geo['markers'][] = array(
 				'geo'     => $geo,
 				'tooltip' => $tooltip,
 				'color' => $color,
+				'scale' => $scale,
+				'element' => $elem,
 			);
 			return;
 		}
@@ -303,11 +305,13 @@ if ( ! class_exists( 'CMB2_MB_Map' ) ) {
 				$i = 1;
 				foreach( $this->geo['markers'] as $marker ) {
 					$html = '
+						' . ( ! empty( $marker['element'] ) ? 'const el' . $i . ' = document.createElement(\'div\');' : '' ) . '
+						' . ( ! empty( $marker['element'] ) ? 'el' . $i . '.innerHTML = \'' . $marker['element'] . '\';' : '' ) . '
 						const popup' . $i . ' = new mapboxgl.Popup({ offset: 25 }).setMaxWidth("300px").setHTML(
 												\'' . '<div class="mapbox-popup-content-wrap">' . $marker['tooltip'] . '</div>\'
 												);
 
-						const marker' . $i . ' = new mapboxgl.Marker({ color: \'' . $marker['color'] . '\' })
+						const marker' . $i . ' = new mapboxgl.Marker({ color: \'' . $marker['color'] . '\', scale: ' . $marker['scale'] . ( ! empty( $marker['element'] ) ? ', element: el' . $i : '' ) . ' })
 							.setLngLat([' . $marker['geo']['lnglat'] . '])
 							.setPopup(popup' . $i . ')
 							.addTo(map);
