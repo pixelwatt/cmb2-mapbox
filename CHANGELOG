@@ -1,5 +1,51 @@
 # CHANGELOG
 
+## v2.0.0-beta1
+
+### Method Theme Integration
+
+The plugin can now register its settings inside the [Method theme](https://github.com/pixelwatt/method)'s unified options page instead of its own admin page. Enable via:
+
+```php
+add_filter( 'cmb2_mapbox_use_method', '__return_true' );
+```
+
+When the filter returns `true`:
+- The standalone "CMB2 Mapbox" options page is suppressed.
+- A new `cmb2_mapbox_register_custom_options()` callback hooks into `method_options_before_fields` and appends the Access Token and Map Center fields to Method's options.
+- All option reads pull from the `method_options` option key instead of `cmb2_mapbox`.
+
+### ⚠️ Breaking — Option Key Renames
+
+The two stored option keys have been renamed to be namespace-safe when sharing an option array with other Method modules:
+
+| Old | New |
+| --- | --- |
+| `api_token` | `mapbox_api_token` |
+| `map_center` | `mapbox_map_center` |
+
+Existing standalone installs will need to re-enter their access token and map center (or migrate the values manually) after upgrading.
+
+### Geocoding on Save
+
+New `cmb2_mapbox_geocode( $pid, $kdata, $serialized )` helper performs a forward geocode against the Mapbox Search/Geocode v6 API using the plugin's access token.
+
+- New field arg `geocode_serialized_key` points at a post meta key containing a serialized address array (e.g. street/city/state/zip). When set, the field UI renders a **Geocode on Save** checkbox.
+- Ticking the checkbox before saving will look up the linked address, then overwrite the field's `lng`, `lat`, and `lnglat` values with the geocoded coordinates.
+- The sanitize callback (`cmb2_sanitize_mapbox_map_callback`) now receives `$object_id`, `$field_args`, and `$field` (signature widened from 2 args to 5; filter priority moved from `10` to `48`).
+
+### Library Updates
+
+- Mapbox GL JS: **3.18.0 → 3.23.1**
+- mapbox-gl-draw: **1.4.3 → 1.5.1**
+
+### Internal
+
+- `get_option()` calls now route through a single `cmb2_mapbox_method()` check so the option key resolves correctly in both standalone and Method-integrated modes.
+- `CMB2_MB_Map::set_options()` defaults updated to the new option key names.
+
+---
+
 ## v1.5.2
 
 Map marker scale can now be passed via the add_marker() method, and a custom html element to use in the place of the standard map marker can also be passed via add_marker()

@@ -3,7 +3,7 @@
  * Plugin Name: CMB2 Mapbox
  * Plugin URI:
  * Description: This plugin adds a new CMB2 fieldtype for adding a single point to a Mapbox map. This plugin requires CMB2 and a Mapbox access token.
- * Version: 1.5.3
+ * Version: 2.0.0-beta1
  * Author: Rob Clark
  * Author URI: https://robclark.io
  * License: GPLv2 or later
@@ -11,59 +11,100 @@
  * GitHub Plugin URI: https://github.com/pixelwatt/cmb2-mapbox
  */
 
+// apply_filters( 'cmb2_mapbox_use_method', false );
+
+function cmb2_mapbox_method() {
+	return apply_filters( 'cmb2_mapbox_use_method', false );
+}
+
 add_action( 'cmb2_admin_init', 'cmb2_mapbox_options_metabox' );
 
 function cmb2_mapbox_options_metabox() {
+	if ( ! cmb2_mapbox_method() ) {
+		/**
+		* Registers options page menu item and form.
+		*/
+		$cmb_options = new_cmb2_box(
+			array(
+				'id'           => 'cmb2_mapbox_plugin_options_metabox',
+				'title'        => esc_html__( 'CMB2 Mapbox Configuration', 'cmb2-mapbox' ),
+				'object_types' => array( 'options-page' ),
 
-	/**
-	 * Registers options page menu item and form.
-	 */
-	$cmb_options = new_cmb2_box(
-		array(
-			'id'           => 'cmb2_mapbox_plugin_options_metabox',
-			'title'        => esc_html__( 'CMB2 Mapbox Configuration', 'cmb2-mapbox' ),
-			'object_types' => array( 'options-page' ),
+				/*
+				* The following parameters are specific to the options-page box
+				* Several of these parameters are passed along to add_menu_page()/add_submenu_page().
+				*/
 
-			/*
-			 * The following parameters are specific to the options-page box
-			 * Several of these parameters are passed along to add_menu_page()/add_submenu_page().
-			 */
+				'option_key'      => 'cmb2_mapbox', // The option key and admin menu page slug.
+				'menu_title'      => esc_html__( 'CMB2 Mapbox', 'cmb2-mapbox' ), // Falls back to 'title' (above).
+				'position'        => 2, // Menu position. Only applicable if 'parent_slug' is left empty.
+				'parent_slug'     => 'options-general.php',
+				'save_button'     => esc_html__( 'Save Mapbox Settings', 'cmb2-mapbox' ), // The text for the options-page save button. Defaults to 'Save'.
+			)
+		);
 
-			'option_key'      => 'cmb2_mapbox', // The option key and admin menu page slug.
-			'menu_title'      => esc_html__( 'CMB2 Mapbox', 'cmb2-mapbox' ), // Falls back to 'title' (above).
-			'position'        => 2, // Menu position. Only applicable if 'parent_slug' is left empty.
-			'parent_slug'     => 'options-general.php',
-			'save_button'     => esc_html__( 'Save Mapbox Settings', 'cmb2-mapbox' ), // The text for the options-page save button. Defaults to 'Save'.
-		)
-	);
+		$cmb_options->add_field(
+			array(
+				'name'     => __( 'Access Token', 'cmb2-mapbox' ),
+				'id'       => 'mapbox_api_token',
+				'type'     => 'textarea',
+			)
+		);
 
-	$cmb_options->add_field(
-		array(
-			'name'     => __( 'Access Token', 'cmb2-mapbox' ),
-			'id'       => 'api_token',
-			'type'     => 'textarea',
-		)
-	);
+		$cmb_options->add_field(
+			array(
+				'name'     => __( 'Map Center', 'cmb2-mapbox' ),
+				'id'       => 'mapbox_map_center',
+				'type'     => 'text',
+				'attributes' => array(
+					'placeholder' => 'lng, lat',
+				),
+			)
+		);
 
-	$cmb_options->add_field(
-		array(
-			'name'     => __( 'Map Center', 'cmb2-mapbox' ),
-			'id'       => 'map_center',
-			'type'     => 'text',
-			'attributes' => array(
-				'placeholder' => 'lng, lat',
-			),
-		)
-	);
+	}
+}
+
+add_action( 'method_options_before_fields', 'cmb2_mapbox_register_custom_options', 99 );
+
+function cmb2_mapbox_register_custom_options( $cmb_options ) {
+	if ( cmb2_mapbox_method() ) {
+		$cmb_options->add_field(
+			array(
+				'name'     => __( 'CMB2 Mapbox Configuration', 'rosslyn' ),
+				'id'       => 'mapbox_options',
+				'type'     => 'title',
+			)
+		);
+
+		$cmb_options->add_field(
+			array(
+				'name'     => __( 'Access Token', 'cmb2-mapbox' ),
+				'id'       => 'mapbox_api_token',
+				'type'     => 'textarea',
+			)
+		);
+
+		$cmb_options->add_field(
+			array(
+				'name'     => __( 'Map Center', 'cmb2-mapbox' ),
+				'id'       => 'mapbox_map_center',
+				'type'     => 'text',
+				'attributes' => array(
+					'placeholder' => 'lng, lat',
+				),
+			)
+		);
+	}
 }
 
 
 function cmb2_mapbox_scripts() {
-	wp_enqueue_style( 'mapbox-gl', 'https://api.mapbox.com/mapbox-gl-js/v3.18.0/mapbox-gl.css', array(), null );
-	wp_enqueue_script( 'mapbox-gl', 'https://api.mapbox.com/mapbox-gl-js/v3.18.0/mapbox-gl.js', array(), null );
+	wp_enqueue_style( 'mapbox-gl', 'https://api.mapbox.com/mapbox-gl-js/v3.23.1/mapbox-gl.css', array(), null );
+	wp_enqueue_script( 'mapbox-gl', 'https://api.mapbox.com/mapbox-gl-js/v3.23.1/mapbox-gl.js', array(), null );
 	if ( is_admin() ) {
-		wp_enqueue_style( 'mapbox-gl-draw', 'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.css', array(), null );
-		wp_enqueue_script( 'mapbox-gl-draw', 'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.js', array( 'mapbox-gl' ), null );
+		wp_enqueue_style( 'mapbox-gl-draw', 'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.5.1/mapbox-gl-draw.css', array(), null );
+		wp_enqueue_script( 'mapbox-gl-draw', 'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.5.1/mapbox-gl-draw.js', array( 'mapbox-gl' ), null );
 	}
 }
 
@@ -71,21 +112,22 @@ add_action( 'wp_enqueue_scripts', 'cmb2_mapbox_scripts' );
 add_action( 'admin_enqueue_scripts', 'cmb2_mapbox_scripts' );
 
 function cmb2_render_mapbox_map_callback( $field, $value, $object_id, $object_type, $field_type ) {
-	$options = get_option( 'cmb2_mapbox' );
+	$options = get_option( ( cmb2_mapbox_method() ? 'method_options' : 'cmb2_mapbox' ) );
 	if ( is_array( $options ) ) {
-		if ( isset( $options['api_token'] ) ) {
+		if ( isset( $options['mapbox_api_token'] ) ) {
 			$value = wp_parse_args(
 				$value,
 				array(
-					'lat' => '',
-					'lng'  => '',
-					'lnglat' => '',
+					'lat'             => '',
+					'lng'             => '',
+					'lnglat'          => '',
+					'geocode_on_save' => '',
 				),
 			);
 			?>
 				<div id='map' style='width: 100%; height: 400px;'></div>
 				<script>
-					mapboxgl.accessToken = '<?php echo $options['api_token']; ?>';
+					mapboxgl.accessToken = '<?php echo $options['mapbox_api_token']; ?>';
 					var map = new mapboxgl.Map({
 						container: 'map',
 						style: 'mapbox://styles/mapbox/streets-v11',
@@ -94,7 +136,7 @@ function cmb2_render_mapbox_map_callback( $field, $value, $object_id, $object_ty
 							center: [<?php echo $value['lnglat']; ?>]
 						<?php } else { ?>
 							zoom: <?php echo ( cmb2_mapbox_check_array_key( $field->args, 'default_zoom' ) ? $field->args['default_zoom'] : '11' ); ?>,
-							center: [<?php echo ( cmb2_mapbox_check_array_key( $options, 'map_center' ) ? $options['map_center'] : '-95.7129,37.0902' ); ?>]
+							center: [<?php echo ( cmb2_mapbox_check_array_key( $options, 'mapbox_map_center' ) ? $options['mapbox_map_center'] : '-95.7129,37.0902' ); ?>]
 						<?php } ?>
 					});
 					map.addControl(new mapboxgl.NavigationControl());
@@ -210,6 +252,24 @@ function cmb2_render_mapbox_map_callback( $field, $value, $object_id, $object_ty
 							)
 						);
 					?></div>
+					<?php
+						if ( cmb2_mapbox_check_array_key( $field->args, 'geocode_serialized_key' ) ) {
+					?>
+						<p><label for="<?php echo $field_type->_id( '_geocode_on_save' ); ?>"><?php
+						echo $field_type->input(
+							array(
+								'type'    => 'checkbox',
+								'name'    => $field_type->_name( '[geocode_on_save]' ),
+								'id'      => $field_type->_id( '_geocode_on_save' ),
+								'value'   => 'checked',
+								'checked' => false,
+								'desc'    => '',
+							)
+						);
+					?> Geocode on Save</label></p>
+					<?php
+						}
+					?>
 			<?php
 		}
 	}
@@ -218,7 +278,7 @@ function cmb2_render_mapbox_map_callback( $field, $value, $object_id, $object_ty
 
 add_filter( 'cmb2_render_mapbox_map', 'cmb2_render_mapbox_map_callback', 10, 5 );
 
-function cmb2_sanitize_mapbox_map_callback( $override_value, $value ) {
+function cmb2_sanitize_mapbox_map_callback( $override_value, $value, $object_id, $field_args, $field ) {
 	if ( cmb2_mapbox_check_array_key( $value, 'lnglat' ) ) {
 		$value['lnglat'] = str_replace( ' ', '', $value['lnglat'] );
 	}
@@ -233,9 +293,68 @@ function cmb2_sanitize_mapbox_map_callback( $override_value, $value ) {
 	} elseif ( ( ! cmb2_mapbox_check_array_key( $value, 'lnglat' ) ) && ( cmb2_mapbox_check_array_key( $value, 'lng' ) ) && ( cmb2_mapbox_check_array_key( $value,'lat' ) ) ) {
 		$value['lnglat'] = $value['lng'] . ',' . $value['lat'];
 	}
+
+	if ( cmb2_mapbox_check_array_key( $value, 'geocode_on_save' ) ) {
+		$value['geocode_on_save'] = '';
+		if ( cmb2_mapbox_check_array_key( $field_args, 'geocode_serialized_key' ) ) {
+			$geocoded = cmb2_mapbox_geocode( $object_id, $field_args['geocode_serialized_key'], true );
+			if ( ( cmb2_mapbox_check_array_key( $geocoded, 'lng' ) ) && ( cmb2_mapbox_check_array_key( $geocoded, 'lat' ) ) && ( cmb2_mapbox_check_array_key( $geocoded, 'lnglat' ) ) ) {
+				$value['lnglat'] = $geocoded['lnglat'];
+				$value['lng'] = $geocoded['lng'];
+				$value['lat'] = $geocoded['lat'];
+			}
+		}
+	}
+
 	return $value;
 }
-add_filter( 'cmb2_sanitize_mapbox_map', 'cmb2_sanitize_mapbox_map_callback', 10, 2 );
+add_filter( 'cmb2_sanitize_mapbox_map', 'cmb2_sanitize_mapbox_map_callback', 48, 5 );
+
+function cmb2_mapbox_geocode( $pid, $kdata, $serialized ) {
+	$addr = '';
+	$geo = array(
+		'lng' => '',
+		'lat' => '',
+		'lnglat' => '',
+	);
+	$options = get_option( ( cmb2_mapbox_method() ? 'method_options' : 'cmb2_mapbox' ) );
+	if ( is_array( $options ) ) {
+		if ( isset( $options['mapbox_api_token'] ) ) {
+			if ( ( $serialized ) && ( is_string( $kdata ) ) ) {
+				$addr_array = get_post_meta( $pid, $kdata, true );
+				if ( is_array( $addr_array ) ) {
+					if ( 0 < count( $addr_array ) ) {
+						$addr = implode( ', ', $addr_array );
+					}
+				}
+			}
+			if ( ! empty( $addr ) ) {
+				$curl = curl_init();
+				curl_setopt($curl, CURLOPT_URL, 'https://api.mapbox.com/search/geocode/v6/forward?q=' . urlencode( $addr ) . '&limit=1&types=place,address&access_token=' . $options['mapbox_api_token'] );
+				curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+				$output = curl_exec($curl);
+				curl_close($curl);
+				$output = json_decode( $output, true );
+				if ( cmb2_mapbox_check_array_key( $output, 'features' ) ) {
+					if ( cmb2_mapbox_check_array_key( $output['features'], 0 ) ) {
+						if ( cmb2_mapbox_check_array_key( $output['features'][0], 'geometry' ) ) {
+							if ( cmb2_mapbox_check_array_key( $output['features'][0]['geometry'], 'coordinates' ) ) {
+								if ( ( cmb2_mapbox_check_array_key( $output['features'][0]['geometry']['coordinates'], 0 ) ) && ( cmb2_mapbox_check_array_key( $output['features'][0]['geometry']['coordinates'], 1 ) ) ) {
+									$lng =  $output['features'][0]['geometry']['coordinates'][0];
+									$lat =  $output['features'][0]['geometry']['coordinates'][1];
+									$geo['lng'] = $lng;
+									$geo['lat'] = $lat;
+									$geo['lnglat'] = $lng . ',' . $lat;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return $geo;
+}
 
 function cmb2_mapbox_check_array_key( $item, $key ) {
 	$output = false;
@@ -265,10 +384,10 @@ if ( ! class_exists( 'CMB2_MB_Map' ) ) {
 		private function set_options() {
 			// Set plugin options
 			$defaults = array(
-				'api_token' => '',
-				'map_center' => '-95.7129,37.0902',
+				'mapbox_api_token' => '',
+				'mapbox_map_center' => '-95.7129,37.0902',
 			);
-			$this->plugin_options = wp_parse_args( get_option( 'cmb2_mapbox' ), $defaults );
+			$this->plugin_options = wp_parse_args( get_option( ( cmb2_mapbox_method() ? 'method_options' : 'cmb2_mapbox' ) ), $defaults );
 		}
 
 		public function set_map_options( $args ) {
@@ -329,7 +448,7 @@ if ( ! class_exists( 'CMB2_MB_Map' ) ) {
 				$output .= '
 					<div id="' . $this->map_options['id'] . '" class="' . $this->map_options['class'] . '" style="height: ' . $this->map_options['height'] . '; width: ' . $this->map_options['width'] . ';"></div>
 					<script>
-						mapboxgl.accessToken = \'' . $this->plugin_options['api_token'] . '\';
+						mapboxgl.accessToken = \'' . $this->plugin_options['mapbox_api_token'] . '\';
 					  	var map = new mapboxgl.Map({
 						    container: \'' . $this->map_options['id'] . '\',
 						    style: \'' . $this->map_options['mapstyle'] . '\',
