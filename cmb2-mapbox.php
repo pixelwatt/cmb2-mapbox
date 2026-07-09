@@ -3,7 +3,7 @@
  * Plugin Name: CMB2 Mapbox
  * Plugin URI:
  * Description: This plugin adds a new CMB2 fieldtype for adding a single point to a Mapbox map. This plugin requires CMB2 and a Mapbox access token.
- * Version: 2.0.0-beta1
+ * Version: 2.0.0-beta2
  * Author: Rob Clark
  * Author URI: https://robclark.io
  * License: GPLv2 or later
@@ -253,7 +253,7 @@ function cmb2_render_mapbox_map_callback( $field, $value, $object_id, $object_ty
 						);
 					?></div>
 					<?php
-						if ( cmb2_mapbox_check_array_key( $field->args, 'geocode_serialized_key' ) ) {
+						if ( ( cmb2_mapbox_check_array_key( $field->args, 'geocode_serialized_key' ) ) || ( cmb2_mapbox_check_array_key( $field->args, 'geocode_key_array' ) ) ) {
 					?>
 						<p><label for="<?php echo $field_type->_id( '_geocode_on_save' ); ?>"><?php
 						echo $field_type->input(
@@ -296,13 +296,16 @@ function cmb2_sanitize_mapbox_map_callback( $override_value, $value, $object_id,
 
 	if ( cmb2_mapbox_check_array_key( $value, 'geocode_on_save' ) ) {
 		$value['geocode_on_save'] = '';
+		$geocoded = array();
 		if ( cmb2_mapbox_check_array_key( $field_args, 'geocode_serialized_key' ) ) {
 			$geocoded = cmb2_mapbox_geocode( $object_id, $field_args['geocode_serialized_key'], true );
-			if ( ( cmb2_mapbox_check_array_key( $geocoded, 'lng' ) ) && ( cmb2_mapbox_check_array_key( $geocoded, 'lat' ) ) && ( cmb2_mapbox_check_array_key( $geocoded, 'lnglat' ) ) ) {
-				$value['lnglat'] = $geocoded['lnglat'];
-				$value['lng'] = $geocoded['lng'];
-				$value['lat'] = $geocoded['lat'];
-			}
+		} elseif ( cmb2_mapbox_check_array_key( $field_args, 'geocode_key_array' ) ) {
+			$geocoded = cmb2_mapbox_geocode( $object_id, $field_args['geocode_key_array'], false );
+		}
+		if ( ( cmb2_mapbox_check_array_key( $geocoded, 'lng' ) ) && ( cmb2_mapbox_check_array_key( $geocoded, 'lat' ) ) && ( cmb2_mapbox_check_array_key( $geocoded, 'lnglat' ) ) ) {
+			$value['lnglat'] = $geocoded['lnglat'];
+			$value['lng'] = $geocoded['lng'];
+			$value['lat'] = $geocoded['lat'];
 		}
 	}
 
@@ -323,6 +326,17 @@ function cmb2_mapbox_geocode( $pid, $kdata, $serialized ) {
 			if ( ( $serialized ) && ( is_string( $kdata ) ) ) {
 				$addr_array = get_post_meta( $pid, $kdata, true );
 				if ( is_array( $addr_array ) ) {
+					if ( 0 < count( $addr_array ) ) {
+						$addr = implode( ', ', $addr_array );
+					}
+				}
+			} elseif ( is_array( $kdata ) ) {
+				$addr_array = array();
+				foreach ( $kdata as $key => $value ) {
+					$data = get_post_meta( $pid, $value, true );
+					if ( ! empty( $data ) ) {
+						$addr_array[] = $data;
+					}
 					if ( 0 < count( $addr_array ) ) {
 						$addr = implode( ', ', $addr_array );
 					}
@@ -401,6 +415,7 @@ if ( ! class_exists( 'CMB2_MB_Map' ) ) {
 				'center'   => '-95.7129,37.0902',
 				'mapstyle' => 'mapbox://styles/mapbox/streets-v11',
 				'terrain'  => false,
+				'include_nav'  => true,
 			);
 			$this->map_options = wp_parse_args( $args, $defaults );
 		}
@@ -459,7 +474,7 @@ if ( ! class_exists( 'CMB2_MB_Map' ) ) {
 					  	});
 					  	map.on(\'load\', function () {
 							var nav = new mapboxgl.NavigationControl();
-							map.addControl(nav, \'top-left\');
+							' . ( $this->map_options['include_nav'] ? 'map.addControl(nav, \'top-left\');' : '' ) . '
 							' . $marker_html . '
 				';
 				if ( $this->map_options['terrain'] ) {
